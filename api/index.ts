@@ -1,4 +1,4 @@
-import { createApp } from "../server/app_factory";
+import { createApp } from "../server/app_factory.js";
 import type { Request, Response } from "express";
 
 let appPromise: Promise<any> | null = null;
