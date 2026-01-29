@@ -1,4 +1,4 @@
-import { createApp, log } from "./app_factory";
+import { createApp, log } from "./app_factory.js";
 
 (async () => {
   const { httpServer } = await createApp();

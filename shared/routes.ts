@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { insertContactMessageSchema, insertBlogPostSchema, contactMessages, blogPosts } from './schema';
+import { insertContactMessageSchema, insertBlogPostSchema, contactMessages, blogPosts } from './schema.js';
 
 // === SHARED ERROR SCHEMAS ===
 export const errorSchemas = {

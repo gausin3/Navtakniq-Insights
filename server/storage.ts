@@ -1,4 +1,4 @@
-import { db } from "./db";
+import { db } from "./db.js";
 import {
   contactMessages,
   blogPosts,
@@ -6,7 +6,7 @@ import {
   type InsertContactMessage,
   type BlogPost,
   type InsertBlogPost
-} from "@shared/schema";
+} from "../shared/schema.js";
 import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
