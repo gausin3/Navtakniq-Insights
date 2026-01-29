@@ -119,7 +119,11 @@ export async function registerRoutes(
 
   // Blog Post Detail Endpoint
   app.get(api.posts.get.path, async (req, res) => {
-    const post = await storage.getBlogPostBySlug(req.params.slug);
+    const slug = req.params.slug;
+    if (typeof slug !== 'string') {
+      return res.status(400).json({ message: "Invalid slug" });
+    }
+    const post = await storage.getBlogPostBySlug(slug);
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
