@@ -91,7 +91,9 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   // Seed the database on startup
-  seedDatabase();
+  seedDatabase().catch((err) => {
+    console.error("Failed to seed database:", err);
+  });
 
   // Contact Form Endpoint
   app.post(api.contact.submit.path, async (req, res) => {
