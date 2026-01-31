@@ -12,6 +12,11 @@ import BlogPost from "@/pages/BlogPost";
 import Contact from "@/pages/Contact";
 import NotFound from "@/pages/not-found";
 
+/**
+ * Main Application Router.
+ * Uses wouter for client-side routing.
+ * Defines the navigation structure and available pages.
+ */
 function Router() {
   return (
     <div className="flex flex-col min-h-screen">
@@ -31,6 +36,10 @@ function Router() {
   );
 }
 
+/**
+ * Root Application Component.
+ * Sets up global providers (QueryClient, Tooltip, Toaster).
+ */
 function App() {
   return (
     <QueryClientProvider client={queryClient}>

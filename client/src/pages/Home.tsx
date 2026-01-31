@@ -4,6 +4,10 @@ import { Link } from "wouter";
 import { ServiceCard } from "@/components/ServiceCard";
 import { usePosts } from "@/hooks/use-posts";
 
+/**
+ * Home Page Component.
+ * Landing page featuring Hero section, Services preview, and latest insights.
+ */
 export default function Home() {
   const { data: posts } = usePosts();
   const featuredPosts = posts?.slice(0, 3) || [];
@@ -16,7 +20,7 @@ export default function Home() {
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-background/90 z-10" />
           {/* Using a tech-abstract pattern as placeholder for video */}
-          <div 
+          <div
             className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop')] bg-cover bg-center opacity-30 animate-pulse"
             style={{ animationDuration: '10s' }}
           />
@@ -35,17 +39,17 @@ export default function Home() {
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
               <span className="text-sm font-medium text-primary-foreground">Future of Data Intelligence</span>
             </div>
-            
+
             <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-white leading-tight mb-8">
               A New <br />
               <span className="text-gradient-primary">Perspective</span>
             </h1>
-            
+
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mb-12 leading-relaxed">
-              We transform complex data landscapes into clear strategic advantages. 
+              We transform complex data landscapes into clear strategic advantages.
               Specializing in Master Data Management, Governance, and AI-driven Automation.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/contact">
                 <button className="px-8 py-4 rounded-full bg-primary text-primary-foreground font-semibold text-lg hover:bg-cyan-400 hover:scale-105 transition-all duration-300 shadow-[0_0_30px_rgba(45,212,191,0.3)]">
@@ -75,25 +79,25 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <ServiceCard 
+            <ServiceCard
               title="Master Data Management"
               description="Create a single source of truth. We architect robust MDM solutions that unify your critical business data."
               icon={Database}
               delay={0.1}
             />
-            <ServiceCard 
+            <ServiceCard
               title="Data Quality"
               description="Ensure accuracy and consistency. Our automated frameworks detect and resolve anomalies in real-time."
               icon={ShieldCheck}
               delay={0.2}
             />
-            <ServiceCard 
+            <ServiceCard
               title="Data Governance"
               description="Secure and compliant data policies. We establish frameworks that protect assets while enabling access."
               icon={FileCheck}
               delay={0.3}
             />
-            <ServiceCard 
+            <ServiceCard
               title="AI Automation"
               description="Intelligent workflows. Leverage machine learning to automate complex data processes and decision making."
               icon={Bot}
@@ -125,8 +129,8 @@ export default function Home() {
               featuredPosts.map((post) => (
                 <Link key={post.slug} href={`/blog/${post.slug}`} className="group cursor-pointer">
                   <div className="aspect-[16/10] overflow-hidden rounded-xl mb-6 bg-secondary/50">
-                    <img 
-                      src={post.coverImage} 
+                    <img
+                      src={post.coverImage}
                       alt={post.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
@@ -163,7 +167,7 @@ export default function Home() {
       <section className="py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-primary/10" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
-        
+
         <div className="container mx-auto px-4 relative z-10 text-center">
           <h2 className="text-4xl md:text-6xl font-display font-bold text-white mb-8">
             Ready to transform your data?

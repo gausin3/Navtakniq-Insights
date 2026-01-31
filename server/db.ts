@@ -3,6 +3,12 @@ import { Pool, neonConfig } from "@neondatabase/serverless";
 import ws from "ws";
 import * as schema from "../shared/schema.js";
 
+/**
+ * @fileoverview Database Connection Setup.
+ * Configures the connection to Neon Postgres using the Serverless driver.
+ * Sets up WebSocket for efficient serverless connections.
+ */
+
 neonConfig.webSocketConstructor = ws;
 
 if (!process.env.DATABASE_URL) {

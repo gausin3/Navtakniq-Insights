@@ -2,6 +2,10 @@ import { motion } from "framer-motion";
 import { Database, ShieldCheck, FileCheck, Bot, CheckCircle2 } from "lucide-react";
 import { Link } from "wouter";
 
+/**
+ * Services Listing Page.
+ * Detials the core offerings of the company.
+ */
 export default function Services() {
   const features = [
     "Enterprise Architecture Design",
@@ -47,20 +51,20 @@ export default function Services() {
     <div className="min-h-screen bg-background pt-20">
       <section className="py-20 md:py-32 bg-secondary/10 border-b border-white/5">
         <div className="container mx-auto px-4 text-center">
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-5xl md:text-7xl font-display font-bold text-white mb-6"
           >
             Our Services
           </motion.h1>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
             className="text-xl text-muted-foreground max-w-2xl mx-auto"
           >
-            Comprehensive data solutions tailored to your enterprise needs. 
+            Comprehensive data solutions tailored to your enterprise needs.
             From strategy to implementation and ongoing support.
           </motion.p>
         </div>
@@ -84,14 +88,14 @@ export default function Services() {
                 <h3 className="text-3xl font-display font-bold text-white mb-4">{service.title}</h3>
                 <p className="text-lg text-white/80 mb-6">{service.description}</p>
                 <p className="text-muted-foreground leading-relaxed mb-8">{service.details}</p>
-                
+
                 <Link href="/contact">
                   <button className="text-primary font-semibold hover:text-cyan-400 flex items-center gap-2 transition-colors">
                     Consult on {service.title} <span className="text-xl">→</span>
                   </button>
                 </Link>
               </div>
-              
+
               <div className="md:col-span-7 order-1 md:order-2 h-64 md:h-full min-h-[300px] rounded-2xl overflow-hidden relative group">
                 {/* Abstract visualization for each service */}
                 <div className={`absolute inset-0 bg-gradient-to-br from-primary/20 to-purple-500/20 group-hover:scale-105 transition-transform duration-700`} />
@@ -111,10 +115,10 @@ export default function Services() {
             <h2 className="text-3xl font-display font-bold text-white mb-4">Why Choose Navtakniq?</h2>
             <p className="text-muted-foreground">We deliver end-to-end value across the data lifecycle.</p>
           </div>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {features.map((feature, i) => (
-              <motion.div 
+              <motion.div
                 key={i}
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}

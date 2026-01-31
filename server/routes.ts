@@ -4,6 +4,14 @@ import { storage } from "./storage.js";
 import { api } from "../shared/routes.js";
 import { z } from "zod";
 
+/**
+ * @fileoverview Server-side Route Definitions.
+ * Maps API endpoints to their handler logic using the shared API contract.
+ */
+
+/**
+ * Seeds the database with initial blog posts if empty.
+ */
 async function seedDatabase() {
   const existingPosts = await storage.getBlogPosts();
   if (existingPosts.length === 0) {
@@ -86,6 +94,12 @@ Contact **Navtakniq** today to start your data quality journey.
   }
 }
 
+/**
+ * Registers all API routes on the Express application.
+ * @param httpServer - The HTTP server instance.
+ * @param app - The Express app instance.
+ * @returns The HTTP server instance.
+ */
 export async function registerRoutes(
   httpServer: Server,
   app: Express

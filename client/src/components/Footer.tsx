@@ -1,6 +1,10 @@
 import { Link } from "wouter";
 import { Linkedin, Twitter, Github } from "lucide-react";
 
+/**
+ * Global Footer Component.
+ * Displays site links, contact info, and copyright.
+ */
 export function Footer() {
   return (
     <footer className="bg-secondary/30 border-t border-white/5 pt-16 pb-8">
@@ -58,7 +62,7 @@ export function Footer() {
             </p>
           </div>
         </div>
-        
+
         <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} Navtakniq. All rights reserved.

@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Main Entry Point for Local Development.
+ * Starts a traditional Node.js server listening on a port.
+ * NOT used in Vercel production (see api/index.ts).
+ */
 import { createApp, log } from "./app_factory.js";
 
 (async () => {

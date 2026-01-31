@@ -1,6 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
-import { api, type InsertContactMessage } from "@shared/routes";
+import { api } from "@shared/routes";
+import { type InsertContactMessage } from "@shared/schema";
 
+/**
+ * Hook to submit contact form data.
+ * Handles API request and error parsing.
+ * @returns Mutation object for submitting the form.
+ */
 export function useSubmitContact() {
   return useMutation({
     mutationFn: async (data: InsertContactMessage) => {
@@ -11,7 +17,7 @@ export function useSubmitContact() {
         body: JSON.stringify(validated),
         credentials: "include",
       });
-      
+
       if (!res.ok) {
         if (res.status === 400) {
           const error = api.contact.submit.responses[400].parse(await res.json());

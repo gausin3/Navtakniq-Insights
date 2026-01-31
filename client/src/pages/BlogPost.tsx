@@ -5,6 +5,10 @@ import { Loader2, ArrowLeft, Calendar, User, Share2 } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 
+/**
+ * Individual Blog Post Page.
+ * Renders the markdown content of a specific blog post based on the slug.
+ */
 export default function BlogPost() {
   const [, params] = useRoute("/blog/:slug");
   const { data: post, isLoading, isError } = usePost(params?.slug || "");
@@ -58,8 +62,8 @@ export default function BlogPost() {
           </h1>
 
           <div className="aspect-[21/9] rounded-2xl overflow-hidden mb-12 bg-secondary border border-white/5">
-            <img 
-              src={post.coverImage} 
+            <img
+              src={post.coverImage}
               alt={post.title}
               className="w-full h-full object-cover"
             />

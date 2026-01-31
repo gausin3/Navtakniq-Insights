@@ -3,6 +3,12 @@ import { registerRoutes } from "./routes.js";
 import { serveStatic } from "./static.js";
 import { createServer, type Server } from "http";
 
+/**
+ * @fileoverview Express Application Factory.
+ * Creates and configures the Express application instance.
+ * Separated from the entry point to allow usage in both local server and Vercel serverless functions.
+ */
+
 declare module "http" {
     interface IncomingMessage {
         rawBody: unknown;
@@ -20,6 +26,11 @@ export function log(message: string, source = "express") {
     console.log(`${formattedTime} [${source}] ${message}`);
 }
 
+/**
+ * Creates the Express application and HTTP server.
+ * Sets up middleware (logging, JSON parsing) and registers routes.
+ * @returns An object containing the Express app and the HTTP server instance.
+ */
 export async function createApp() {
     const app = express();
     const httpServer = createServer(app);

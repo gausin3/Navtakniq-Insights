@@ -6,10 +6,14 @@ import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { Mail, MapPin, Phone, Send, Loader2 } from "lucide-react";
 
+/**
+ * Contact Page Component.
+ * features a contact form with Zod validation and contact information.
+ */
 export default function Contact() {
   const { toast } = useToast();
   const submitMutation = useSubmitContact();
-  
+
   const form = useForm<InsertContactMessage>({
     resolver: zodResolver(insertContactMessageSchema),
     defaultValues: {
@@ -43,7 +47,7 @@ export default function Contact() {
     <div className="min-h-screen bg-background pt-20">
       <section className="py-20 bg-secondary/10 border-b border-white/5">
         <div className="container mx-auto px-4 text-center">
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-5xl md:text-7xl font-display font-bold text-white mb-6"
@@ -51,7 +55,7 @@ export default function Contact() {
             Get in Touch
           </motion.h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Ready to start your data transformation journey? 
+            Ready to start your data transformation journey?
             Contact us for a consultation or to learn more about our services.
           </p>
         </div>
@@ -66,7 +70,7 @@ export default function Contact() {
             transition={{ delay: 0.2 }}
           >
             <h2 className="text-3xl font-display font-bold text-white mb-8">Contact Information</h2>
-            
+
             <div className="space-y-8">
               <div className="flex items-start gap-6">
                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -129,7 +133,7 @@ export default function Contact() {
             className="bg-secondary/30 p-8 md:p-12 rounded-3xl border border-white/5"
           >
             <h2 className="text-3xl font-display font-bold text-white mb-8">Send a Message</h2>
-            
+
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">

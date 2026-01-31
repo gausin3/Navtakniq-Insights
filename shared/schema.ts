@@ -2,7 +2,17 @@ import { pgTable, text, serial, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+/**
+ * @fileoverview Defines the database schema and Zod validation schemas.
+ * Shared between client and server to ensure type safety.
+ */
+
 // === TABLE DEFINITIONS ===
+
+/**
+ * Contact Messages table definition.
+ * Stores inquiries submitted via the contact form.
+ */
 export const contactMessages = pgTable("contact_messages", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -12,6 +22,10 @@ export const contactMessages = pgTable("contact_messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+/**
+ * Blog Posts table definition.
+ * Stores content for the insights/blog section.
+ */
 export const blogPosts = pgTable("blog_posts", {
   id: serial("id").primaryKey(),
   slug: text("slug").notNull().unique(),
@@ -23,14 +37,14 @@ export const blogPosts = pgTable("blog_posts", {
 });
 
 // === SCHEMAS ===
-export const insertContactMessageSchema = createInsertSchema(contactMessages).omit({ 
-  id: true, 
-  createdAt: true 
+export const insertContactMessageSchema = createInsertSchema(contactMessages).omit({
+  id: true,
+  createdAt: true
 });
 
-export const insertBlogPostSchema = createInsertSchema(blogPosts).omit({ 
-  id: true, 
-  publishedAt: true 
+export const insertBlogPostSchema = createInsertSchema(blogPosts).omit({
+  id: true,
+  publishedAt: true
 });
 
 // === EXPLICIT API CONTRACT TYPES ===

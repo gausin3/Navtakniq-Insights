@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import { insertContactMessageSchema, insertBlogPostSchema, contactMessages, blogPosts } from './schema.js';
 
+/**
+ * @fileoverview Defines the API contract, routes, and shared utilities.
+ * Acts as the source of truth for API communication between client and server.
+ */
+
 // === SHARED ERROR SCHEMAS ===
 export const errorSchemas = {
   validation: z.object({
@@ -16,6 +21,10 @@ export const errorSchemas = {
 };
 
 // === API CONTRACT ===
+/**
+ * Centralized API route definitions.
+ * Includes paths, methods, input schemas (Zod), and response types.
+ */
 export const api = {
   contact: {
     submit: {
@@ -47,6 +56,12 @@ export const api = {
   },
 };
 
+/**
+ * Utility to replace path parameters (e.g., :slug) with actual values.
+ * @param path - The URL path pattern.
+ * @param params - Object containing parameter values.
+ * @returns The constructed URL.
+ */
 export function buildUrl(path: string, params?: Record<string, string | number>): string {
   let url = path;
   if (params) {

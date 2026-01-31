@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Vercel Serverless Function Entry Point.
+ * Adapts the Express application to run as a serverless handler.
+ * Caches the app instance for performance.
+ */
 import { createApp } from "../server/app_factory.js";
 import type { Request, Response } from "express";
 

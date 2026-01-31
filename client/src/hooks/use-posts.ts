@@ -1,6 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
 
+/**
+ * Custom hook to fetch blog posts from the API.
+ * Uses React Query for caching and state management.
+ * @returns Query object containing the list of blog posts.
+ */
 export function usePosts() {
   return useQuery({
     queryKey: [api.posts.list.path],
@@ -12,6 +17,11 @@ export function usePosts() {
   });
 }
 
+/**
+ * Custom hook to fetch a single blog post by slug.
+ * @param slug - The unique slug of the blog post.
+ * @returns Query object containing the blog post details.
+ */
 export function usePost(slug: string) {
   return useQuery({
     queryKey: [api.posts.get.path, slug],
