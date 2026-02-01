@@ -12,12 +12,27 @@ import BlogPost from "@/pages/BlogPost";
 import Contact from "@/pages/Contact";
 import Admin from "@/pages/Admin";
 import NotFound from "@/pages/not-found";
+import { AuthProvider } from "@/hooks/use-auth";
+import AuthPage from "@/pages/AuthPage";
+import { ProtectedRoute } from "./lib/protected-route";
 
 /**
- * Main Application Router.
- * Uses wouter for client-side routing.
- * Defines the navigation structure and available pages.
+ * Root Application Component.
+ * Sets up global providers (QueryClient, Tooltip, Toaster).
  */
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthProvider>
+          <Router />
+          <Toaster />
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
+
 function Router() {
   return (
     <div className="flex flex-col min-h-screen">
@@ -29,27 +44,13 @@ function Router() {
           <Route path="/blog" component={Blog} />
           <Route path="/blog/:slug" component={BlogPost} />
           <Route path="/contact" component={Contact} />
-          <Route path="/admin" component={Admin} />
+          <Route path="/auth" component={AuthPage} />
+          <ProtectedRoute path="/admin" component={Admin} />
           <Route component={NotFound} />
         </Switch>
       </main>
       <Footer />
     </div>
-  );
-}
-
-/**
- * Root Application Component.
- * Sets up global providers (QueryClient, Tooltip, Toaster).
- */
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Router />
-        <Toaster />
-      </TooltipProvider>
-    </QueryClientProvider>
   );
 }
 

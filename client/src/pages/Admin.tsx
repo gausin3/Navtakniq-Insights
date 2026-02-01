@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertBlogPostSchema, type InsertBlogPost, type BlogPost } from "@shared/schema";
+import { insertBlogPostSchema, type InsertBlogPost, type BlogPost, changePasswordSchema } from "@shared/schema";
 import { usePosts, useCreatePost, useUpdatePost, useDeletePost } from "@/hooks/use-posts";
 import { useContactMessages } from "@/hooks/use-contact";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Plus, Edit, Trash2, ArrowLeft, Save, Image as ImageIcon, LayoutGrid, EyeOff, MessageSquare } from "lucide-react";
-import { Link } from "wouter";
+import { Loader2, Plus, Edit, Trash2, ArrowLeft, Save, Image as ImageIcon, LayoutGrid, EyeOff, MessageSquare, Settings } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -22,7 +22,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import ImageGallery from "@/components/ImageGallery";
 import { Switch } from "@/components/ui/switch";
 
+import { useAuth } from "@/hooks/use-auth";
+import { LogOut } from "lucide-react";
+
 export default function Admin() {
+    const { user, logoutMutation, changePasswordMutation } = useAuth();
     const { data: posts, isLoading } = usePosts();
     const { data: contactMessages, isLoading: isLoadingMessages } = useContactMessages();
     const { mutate: createPost, isPending: isCreating } = useCreatePost();
@@ -30,7 +34,7 @@ export default function Admin() {
     const { mutate: deletePost, isPending: isDeleting } = useDeletePost();
     const { toast } = useToast();
 
-    const [mode, setMode] = useState<"list" | "create" | "edit" | "gallery" | "messages">("list");
+    const [mode, setMode] = useState<"list" | "create" | "edit" | "gallery" | "messages" | "settings">("list");
     const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
     const [deleteId, setDeleteId] = useState<number | null>(null);
 
@@ -46,7 +50,15 @@ export default function Admin() {
             summary: "",
             content: "",
             coverImage: "",
-            isPublished: true,
+            isPublished: false, // Default to draft
+        },
+    });
+
+    const passwordForm = useForm({
+        resolver: zodResolver(changePasswordSchema),
+        defaultValues: {
+            currentPassword: "",
+            newPassword: "",
         },
     });
 
@@ -128,6 +140,20 @@ export default function Admin() {
         }
     };
 
+    const onPasswordSubmit = (data: any) => {
+        changePasswordMutation.mutate(data, {
+            onSuccess: () => {
+                passwordForm.reset();
+            },
+        });
+    };
+
+    // Filter posts for non-admin if needed?
+    // Actually simpler: Admin sees everything. User sees "Create" and maybe their own drafts (future).
+    // For now, let's restrict the dashboard features.
+
+    const isAdmin = user?.role === "admin";
+
     if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -142,29 +168,45 @@ export default function Admin() {
                 <div className="flex justify-between items-center mb-8">
                     <h1 className="text-3xl font-display font-bold text-white flex items-center gap-3">
                         {mode === "list" && "Dashboard"}
-                        {mode === "list" && "Dashboard"}
                         {mode === "gallery" && "Media Library"}
                         {mode === "messages" && "Contact Messages"}
-                        {mode === "create" && "New Post"}
+                        {mode === "settings" && "Account Settings"}
                         {mode === "create" && "New Post"}
                         {mode === "edit" && "Edit Post"}
                     </h1>
 
                     <div className="flex gap-4">
+                        <button
+                            onClick={() => logoutMutation.mutate()}
+                            className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition-colors flex items-center gap-2"
+                        >
+                            <LogOut size={16} /> Logout
+                        </button>
+
                         {mode === "list" && (
                             <>
                                 <button
-                                    onClick={() => setMode("messages")}
+                                    onClick={() => setMode("settings")}
                                     className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition-colors flex items-center gap-2"
                                 >
-                                    <MessageSquare size={18} /> Messages
+                                    <Settings size={18} /> Settings
                                 </button>
-                                <button
-                                    onClick={() => setMode("gallery")}
-                                    className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition-colors flex items-center gap-2"
-                                >
-                                    <ImageIcon size={18} /> Media Library
-                                </button>
+                                {isAdmin && (
+                                    <>
+                                        <button
+                                            onClick={() => setMode("messages")}
+                                            className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition-colors flex items-center gap-2"
+                                        >
+                                            <MessageSquare size={18} /> Messages
+                                        </button>
+                                        <button
+                                            onClick={() => setMode("gallery")}
+                                            className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition-colors flex items-center gap-2"
+                                        >
+                                            <ImageIcon size={18} /> Media Library
+                                        </button>
+                                    </>
+                                )}
                             </>
                         )}
                         {mode !== "list" && (
@@ -216,21 +258,25 @@ export default function Admin() {
                                                 <Link href={`/blog/${post.slug}`} className="text-xs text-primary hover:underline flex-grow">
                                                     View Live
                                                 </Link>
-                                                <button
-                                                    onClick={() => handleEdit(post)}
-                                                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white hover:text-cyan-400 transition-colors"
-                                                    title="Edit"
-                                                >
-                                                    <Edit size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => setDeleteId(post.id)}
-                                                    className="p-2 rounded-lg bg-white/5 hover:bg-red-500/20 text-white hover:text-red-400 transition-colors"
-                                                    title="Delete"
-                                                    disabled={isDeleting}
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
+                                                {isAdmin && (
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleEdit(post)}
+                                                            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white hover:text-cyan-400 transition-colors"
+                                                            title="Edit"
+                                                        >
+                                                            <Edit size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setDeleteId(post.id)}
+                                                            className="p-2 rounded-lg bg-white/5 hover:bg-red-500/20 text-white hover:text-red-400 transition-colors"
+                                                            title="Delete"
+                                                            disabled={isDeleting}
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -287,6 +333,45 @@ export default function Admin() {
                                 </div>
                             </div>
                         </motion.div>
+                    ) : mode === "settings" ? (
+                        <motion.div
+                            key="settings"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="max-w-xl mx-auto"
+                        >
+                            <div className="bg-secondary/20 border border-white/5 rounded-xl p-8">
+                                <h3 className="text-xl font-bold text-white mb-6">Change Password</h3>
+                                <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-white">Current Password</label>
+                                        <input
+                                            type="password"
+                                            {...passwordForm.register("currentPassword")}
+                                            className="w-full px-4 py-2 rounded-lg bg-black/20 border border-white/10 text-white focus:border-primary/50 focus:outline-none transition-colors"
+                                        />
+                                        {passwordForm.formState.errors.currentPassword && <p className="text-red-400 text-xs">{passwordForm.formState.errors.currentPassword.message}</p>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-white">New Password</label>
+                                        <input
+                                            type="password"
+                                            {...passwordForm.register("newPassword")}
+                                            className="w-full px-4 py-2 rounded-lg bg-black/20 border border-white/10 text-white focus:border-primary/50 focus:outline-none transition-colors"
+                                        />
+                                        {passwordForm.formState.errors.newPassword && <p className="text-red-400 text-xs">{passwordForm.formState.errors.newPassword.message}</p>}
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={changePasswordMutation.isPending}
+                                        className="w-full py-2 rounded-lg bg-primary text-primary-foreground font-bold hover:bg-cyan-400 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                                    >
+                                        {changePasswordMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : "Update Password"}
+                                    </button>
+                                </form>
+                            </div>
+                        </motion.div>
                     ) : mode === "gallery" ? (
                         <motion.div
                             key="gallery"
@@ -312,11 +397,18 @@ export default function Admin() {
                                         <p className="text-sm text-muted-foreground">Manage your blog post content.</p>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-sm font-medium text-white">Published</span>
-                                        <Switch
-                                            checked={form.watch("isPublished")}
-                                            onCheckedChange={(checked) => form.setValue("isPublished", checked)}
-                                        />
+                                        {isAdmin && (
+                                            <>
+                                                <span className="text-sm font-medium text-white">Published</span>
+                                                <Switch
+                                                    checked={form.watch("isPublished")}
+                                                    onCheckedChange={(checked) => form.setValue("isPublished", checked)}
+                                                />
+                                            </>
+                                        )}
+                                        {!isAdmin && (
+                                            <span className="text-xs text-muted-foreground bg-white/5 px-2 py-1 rounded">Draft Mode</span>
+                                        )}
                                     </div>
                                 </div>
 

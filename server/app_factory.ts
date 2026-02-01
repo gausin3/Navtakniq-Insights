@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes.js";
 import { serveStatic } from "./static.js";
 import { createServer, type Server } from "http";
+import { setupAuth } from "./auth.js";
 
 /**
  * @fileoverview Express Application Factory.
@@ -70,6 +71,8 @@ export async function createApp() {
 
         next();
     });
+
+    setupAuth(app);
 
     await registerRoutes(httpServer, app);
 

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, boolean, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -33,6 +33,14 @@ export const images = pgTable("images", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+  role: text("role", { enum: ["admin", "user"] }).default("user").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 /**
  * Blog Posts table definition.
  * Stores content for the insights/blog section.
@@ -45,6 +53,7 @@ export const blogPosts = pgTable("blog_posts", {
   content: text("content").notNull(), // Markdown content
   coverImage: text("cover_image").notNull(),
   isPublished: boolean("is_published").default(true).notNull(),
+  authorId: integer("author_id"), // Nullable to support existing posts
   publishedAt: timestamp("published_at").defaultNow(),
 });
 
@@ -61,13 +70,16 @@ export const insertBlogPostSchema = createInsertSchema(blogPosts, {
   isPublished: z.boolean().optional(),
 }).omit({
   id: true,
-  publishedAt: true
+  publishedAt: true,
+  authorId: true, // we handle this on server
 });
 
 export const insertImageSchema = createInsertSchema(images).omit({
   id: true,
   createdAt: true
 });
+
+export const insertUserSchema = createInsertSchema(users);
 
 // === EXPLICIT API CONTRACT TYPES ===
 export type ContactMessage = typeof contactMessages.$inferSelect;
@@ -78,3 +90,11 @@ export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
 
 export type Image = typeof images.$inferSelect;
 export type InsertImage = z.infer<typeof insertImageSchema>;
+
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string(),
+  newPassword: z.string().min(6, "Password must be at least 6 characters"),
+});

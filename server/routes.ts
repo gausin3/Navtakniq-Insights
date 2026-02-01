@@ -2,11 +2,12 @@ import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage.js";
 import { api } from "../shared/routes.js";
-import { insertBlogPostSchema } from "../shared/schema.js";
+import { insertBlogPostSchema, changePasswordSchema } from "../shared/schema.js";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { hashPassword, comparePasswords } from "./auth.js";
 
 // Configure multer for disk storage
 const uploadDir = path.join(process.cwd(), "client", "public", "uploads");
@@ -27,6 +28,8 @@ const storageConfig = multer.diskStorage({
 });
 
 const upload = multer({ storage: storageConfig });
+
+import passport from "passport";
 
 /**
  * @fileoverview Server-side Route Definitions.
@@ -90,6 +93,72 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/register", async (req, res, next) => {
+    try {
+      const existingUser = await storage.getUserByUsername(req.body.username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+
+      const hashedPassword = await hashPassword(req.body.password);
+      const user = await storage.createUser({
+        ...req.body,
+        password: hashedPassword,
+      });
+      req.login(user, (err) => {
+        if (err) return next(err);
+        res.status(201).json(user);
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post("/api/login", passport.authenticate("local"), (req, res) => {
+    res.json(req.user);
+  });
+
+  app.post("/api/logout", (req, res, next) => {
+    req.logout((err) => {
+      if (err) return next(err);
+      res.sendStatus(200);
+    });
+  });
+
+  app.get("/api/user", (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    res.json(req.user);
+  });
+
+  app.post("/api/user/password", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const { currentPassword, newPassword } = changePasswordSchema.parse(req.body);
+      const user = req.user as any;
+
+      // Verify current password
+      const dbUser = await storage.getUser(user.id);
+      if (!dbUser) return res.sendStatus(401);
+
+      if (!(await comparePasswords(currentPassword, dbUser.password))) {
+        return res.status(400).json({ message: "Incorrect current password" });
+      }
+
+      const hashedPassword = await hashPassword(newPassword);
+      await storage.updateUserPassword(user.id, hashedPassword);
+
+      res.sendStatus(200);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid input", errors: err.errors });
+      } else {
+        res.status(500).json({ message: "Failed to update password" });
+      }
+    }
+  });
+
+
   // Contact Form Endpoint
   app.post(api.contact.submit.path, async (req, res) => {
     try {
@@ -140,8 +209,17 @@ export async function registerRoutes(
 
   // Create Blog Post Endpoint
   app.post(api.posts.list.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
     try {
       const input = insertBlogPostSchema.parse(req.body);
+      const user = req.user as any;
+
+      // Force draft if not admin
+      if (user.role !== "admin") {
+        input.isPublished = false;
+      }
+
       const newPost = await storage.createBlogPost(input);
       res.status(201).json(newPost);
     } catch (err) {
@@ -155,6 +233,13 @@ export async function registerRoutes(
 
   // Update Blog Post Endpoint
   app.patch(api.posts.list.path + "/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+
+    // Only Admin can update posts (approval workflow)
+    // Theoretically users could edit their own drafts, but keeping it simple as per request
+    if (user.role !== "admin") return res.sendStatus(403);
+
     try {
       const id = parseInt(req.params.id as string);
       if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
@@ -173,6 +258,11 @@ export async function registerRoutes(
 
   // Delete Blog Post Endpoint
   app.delete(api.posts.list.path + "/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+
+    if (user.role !== "admin") return res.sendStatus(403);
+
     try {
       const id = parseInt(req.params.id as string);
       if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });

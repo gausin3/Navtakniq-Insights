@@ -8,9 +8,17 @@ import {
   type BlogPost,
   type InsertBlogPost,
   type Image,
-  type InsertImage
+  type InsertImage,
+  type User,
+  type InsertUser,
+  users,
 } from "../shared/schema.js";
 import { eq, desc } from "drizzle-orm";
+import session from "express-session";
+import connectPg from "connect-pg-simple";
+import { pool } from "./db.js";
+
+const PostgresSessionStore = connectPg(session);
 
 /**
  * @fileoverview Data Access Layer (Storage).
@@ -31,12 +39,41 @@ export interface IStorage {
   deleteBlogPost(id: number): Promise<void>;
   createImage(image: InsertImage): Promise<Image>;
   getImages(): Promise<Image[]>;
+  getUser(id: number): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUserPassword(id: number, password: string): Promise<void>;
+  sessionStore: session.Store;
 }
 
 /**
  * Concrete implementation of IStorage using Drizzle ORM and Postgres.
  */
 export class DatabaseStorage implements IStorage {
+  sessionStore: session.Store;
+
+  constructor() {
+    this.sessionStore = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true
+    });
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const [newUser] = await db.insert(users).values(user).returning();
+    return newUser;
+  }
+
   async createContactMessage(message: InsertContactMessage): Promise<ContactMessage> {
     const [newMessage] = await db
       .insert(contactMessages)
@@ -111,6 +148,10 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(images)
       .orderBy(desc(images.createdAt));
+  }
+
+  async updateUserPassword(id: number, password: string): Promise<void> {
+    await db.update(users).set({ password }).where(eq(users.id, id));
   }
 }
 
