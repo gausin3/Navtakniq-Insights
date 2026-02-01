@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
  * Fetches and displays a grid of all published blog posts.
  */
 export default function Blog() {
-  const { data: posts, isLoading } = usePosts();
+  const { data: posts, isLoading } = usePosts(true);
 
   if (isLoading) {
     return (

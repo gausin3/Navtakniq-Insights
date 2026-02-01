@@ -46,19 +46,19 @@ export function Footer() {
           <div>
             <h4 className="font-display font-semibold text-white mb-6">Connect</h4>
             <div className="flex space-x-4 mb-6">
-              <a href="#" className="p-2 bg-white/5 rounded-full hover:bg-primary/20 hover:text-primary transition-colors">
+              <a href="https://www.linkedin.com/company/navtakniq/" className="p-2 bg-white/5 rounded-full hover:bg-primary/20 hover:text-primary transition-colors">
                 <Linkedin size={20} />
               </a>
-              <a href="#" className="p-2 bg-white/5 rounded-full hover:bg-primary/20 hover:text-primary transition-colors">
+              <a href="https://twitter.com/navtakniq" className="p-2 bg-white/5 rounded-full hover:bg-primary/20 hover:text-primary transition-colors">
                 <Twitter size={20} />
               </a>
-              <a href="#" className="p-2 bg-white/5 rounded-full hover:bg-primary/20 hover:text-primary transition-colors">
+              <a href="https://github.com/navtakniq" className="p-2 bg-white/5 rounded-full hover:bg-primary/20 hover:text-primary transition-colors">
                 <Github size={20} />
               </a>
             </div>
             <p className="text-xs text-muted-foreground">
               info@navtakniq.com<br />
-              +1 (555) 123-4567
+
             </p>
           </div>
         </div>

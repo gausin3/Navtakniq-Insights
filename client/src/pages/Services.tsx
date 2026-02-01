@@ -22,6 +22,7 @@ export default function Services() {
       title: "Master Data Management",
       description: "Establish a single, trusted view of your critical business data across the enterprise.",
       icon: Database,
+      image: "/images/services/mdm.png",
       details: "We implement robust MDM solutions using industry-leading platforms (Informatica, Tibco, Semarchy). Our approach ensures data consistency, removes duplicates, and creates a golden record for customers, products, and assets."
     },
     {
@@ -29,6 +30,7 @@ export default function Services() {
       title: "Data Quality",
       description: "Proactive data profiling, cleansing, and monitoring to ensure actionable insights.",
       icon: ShieldCheck,
+      image: "/images/services/data_quality.png",
       details: "Bad data costs businesses millions. Our automated data quality frameworks continuously monitor your data health, applying cleansing rules and validation logic to prevent errors before they impact downstream systems."
     },
     {
@@ -36,6 +38,7 @@ export default function Services() {
       title: "Data Governance",
       description: "Frameworks for data security, compliance, and democratization.",
       icon: FileCheck,
+      image: "/images/services/data_governance.png",
       details: "We help you define policies, roles, and responsibilities. Our governance solutions ensure you meet regulatory compliance (GDPR, CCPA) while enabling secure data access for analytics and business users."
     },
     {
@@ -43,6 +46,7 @@ export default function Services() {
       title: "AI Automation",
       description: "Next-generation process automation powered by machine learning.",
       icon: Bot,
+      image: "/images/services/ai_automation.png",
       details: "Transform manual workflows with intelligent automation. We build custom AI agents that can classify documents, predict trends, and automate decision-making processes with human-in-the-loop validation."
     }
   ];
@@ -96,13 +100,14 @@ export default function Services() {
                 </Link>
               </div>
 
-              <div className="md:col-span-7 order-1 md:order-2 h-64 md:h-full min-h-[300px] rounded-2xl overflow-hidden relative group">
-                {/* Abstract visualization for each service */}
-                <div className={`absolute inset-0 bg-gradient-to-br from-primary/20 to-purple-500/20 group-hover:scale-105 transition-transform duration-700`} />
-                <div className="absolute inset-0 backdrop-blur-3xl" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-full h-full bg-grid-white/[0.05]" />
-                </div>
+              <div className="md:col-span-7 order-1 md:order-2 h-64 md:h-full min-h-[350px] rounded-2xl overflow-hidden relative group">
+                {/* Service Image */}
+                <img
+                  src={service.image}
+                  alt={service.title}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-60" />
               </div>
             </motion.div>
           ))}

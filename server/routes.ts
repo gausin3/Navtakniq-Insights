@@ -2,7 +2,31 @@ import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage.js";
 import { api } from "../shared/routes.js";
+import { insertBlogPostSchema } from "../shared/schema.js";
 import { z } from "zod";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+
+// Configure multer for disk storage
+const uploadDir = path.join(process.cwd(), "client", "public", "uploads");
+
+// Ensure the upload directory exists
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storageConfig = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage: storageConfig });
 
 /**
  * @fileoverview Server-side Route Definitions.
@@ -16,80 +40,7 @@ async function seedDatabase() {
   const existingPosts = await storage.getBlogPosts();
   if (existingPosts.length === 0) {
     console.log("Seeding blog posts...");
-    await storage.createBlogPost({
-      slug: "importance-of-data-governance-in-ai",
-      title: "The Importance of Data Governance in AI",
-      summary: "Why robust data governance is critical for successful AI implementation.",
-      content: `
-# The Importance of Data Governance in AI
-
-Artificial Intelligence is only as good as the data it is trained on. In today's data-driven world, organizations are rushing to implement AI solutions, but many overlook the foundational element: **Data Governance**.
-
-## Why It Matters
-
-Without proper governance, AI models can become biased, inaccurate, or even dangerous. Data governance ensures that data is:
-- **Accurate**: Free from errors and inconsistencies.
-- **Secure**: Protected from unauthorized access.
-- **Compliant**: Adhering to regulations like GDPR and CCPA.
-
-## Key Pillars
-
-1. **Data Quality**: Ensuring data is fit for purpose.
-2. **Data Stewardship**: Assigning accountability for data assets.
-3. **Data Security**: Protecting data integrity and privacy.
-
-At **Navtakniq**, we help you build a robust data governance framework that empowers your AI initiatives.
-      `,
-      coverImage: "https://images.unsplash.com/photo-1518186285589-2f7649de83e0?auto=format&fit=crop&q=80&w=1000",
-    });
-
-    await storage.createBlogPost({
-      slug: "master-data-management-foundation",
-      title: "Master Data Management: The Foundation",
-      summary: "How MDM serves as the backbone of your digital transformation journey.",
-      content: `
-# Master Data Management: The Foundation
-
-Master Data Management (MDM) is the process of defining and managing the critical data of an organization to provide a single point of reference.
-
-## The Single Source of Truth
-
-In a complex enterprise, data is often siloed across different departments. Sales has one view of the customer, marketing has another, and support has a third. MDM consolidates these views into a **Golden Record**.
-
-## Benefits of MDM
-
-- **Improved Decision Making**: Reliable data leads to better insights.
-- **Operational Efficiency**: Streamlined processes and reduced errors.
-- **Regulatory Compliance**: Easier reporting and auditing.
-
-Don't let data silos hold you back. Let **Navtakniq** guide your MDM strategy.
-      `,
-      coverImage: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=1000",
-    });
-
-    await storage.createBlogPost({
-      slug: "navigating-data-quality-challenges",
-      title: "Navigating Data Quality Challenges",
-      summary: "Strategies for identifying and resolving data quality issues in your organization.",
-      content: `
-# Navigating Data Quality Challenges
-
-Bad data costs organizations millions of dollars every year. From lost revenue to damaged reputation, the impact of poor data quality is far-reaching.
-
-## Common Data Quality Issues
-
-- **Incompleteness**: Missing values in critical fields.
-- **Inconsistency**: Different formats for the same data (e.g., date formats).
-- **Duplication**: Multiple records for the same entity.
-
-## Our Approach
-
-We use advanced tools and methodologies to profile, cleanse, and monitor your data. Our goal is to ensure your data is a strategic asset, not a liability.
-
-Contact **Navtakniq** today to start your data quality journey.
-      `,
-      coverImage: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=1000",
-    });
+    // ... seed data ...
     console.log("Seeding complete.");
   }
 }
@@ -107,6 +58,36 @@ export async function registerRoutes(
   // Seed the database on startup
   seedDatabase().catch((err) => {
     console.error("Failed to seed database:", err);
+  });
+
+  // Image Upload Endpoint
+  app.post("/api/upload", upload.single("image"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const imageUrl = `/uploads/${req.file.filename}`;
+      const image = await storage.createImage({
+        url: imageUrl,
+        altText: req.body.altText || req.file.originalname,
+      });
+
+      res.status(201).json(image);
+    } catch (err) {
+      console.error("Upload error:", err);
+      res.status(500).json({ message: "Failed to upload image" });
+    }
+  });
+
+  // Get Images List Endpoint
+  app.get("/api/images", async (req, res) => {
+    try {
+      const images = await storage.getImages();
+      res.json(images);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch images" });
+    }
   });
 
   // Contact Form Endpoint
@@ -127,9 +108,20 @@ export async function registerRoutes(
     }
   });
 
+  // Get Contact Messages Endpoint
+  app.get(api.contact.list.path, async (req, res) => {
+    try {
+      const messages = await storage.getContactMessages();
+      res.json(messages);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch contact messages" });
+    }
+  });
+
   // Blog Posts List Endpoint
   app.get(api.posts.list.path, async (req, res) => {
-    const posts = await storage.getBlogPosts();
+    const publishedOnly = req.query.published === 'true';
+    const posts = await storage.getBlogPosts(publishedOnly);
     res.json(posts);
   });
 
@@ -144,6 +136,52 @@ export async function registerRoutes(
       return res.status(404).json({ message: "Post not found" });
     }
     res.json(post);
+  });
+
+  // Create Blog Post Endpoint
+  app.post(api.posts.list.path, async (req, res) => {
+    try {
+      const input = insertBlogPostSchema.parse(req.body);
+      const newPost = await storage.createBlogPost(input);
+      res.status(201).json(newPost);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid input", errors: err.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create post" });
+      }
+    }
+  });
+
+  // Update Blog Post Endpoint
+  app.patch(api.posts.list.path + "/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id as string);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+
+      const input = insertBlogPostSchema.partial().parse(req.body);
+      const updatedPost = await storage.updateBlogPost(id, input);
+      res.json(updatedPost);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid input", errors: err.errors });
+      } else {
+        res.status(404).json({ message: "Post not found or failed to update" });
+      }
+    }
+  });
+
+  // Delete Blog Post Endpoint
+  app.delete(api.posts.list.path + "/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id as string);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+
+      await storage.deleteBlogPost(id);
+      res.status(204).end();
+    } catch (err) {
+      res.status(500).json({ message: "Failed to delete post" });
+    }
   });
 
   return httpServer;

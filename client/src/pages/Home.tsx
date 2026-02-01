@@ -37,7 +37,7 @@ export default function Home() {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8 backdrop-blur-sm">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-sm font-medium text-primary-foreground">Future of Data Intelligence</span>
+              <span className="text-sm font-medium text-cyan-400">Future of Data Intelligence</span>
             </div>
 
             <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-white leading-tight mb-8">

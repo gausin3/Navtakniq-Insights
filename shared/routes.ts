@@ -36,6 +36,13 @@ export const api = {
         400: errorSchemas.validation,
       },
     },
+    list: {
+      method: 'GET' as const,
+      path: '/api/contact',
+      responses: {
+        200: z.array(z.custom<typeof contactMessages.$inferSelect>()),
+      },
+    },
   },
   posts: {
     list: {

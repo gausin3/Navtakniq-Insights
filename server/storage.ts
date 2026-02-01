@@ -2,10 +2,13 @@ import { db } from "./db.js";
 import {
   contactMessages,
   blogPosts,
+  images,
   type ContactMessage,
   type InsertContactMessage,
   type BlogPost,
-  type InsertBlogPost
+  type InsertBlogPost,
+  type Image,
+  type InsertImage
 } from "../shared/schema.js";
 import { eq, desc } from "drizzle-orm";
 
@@ -20,9 +23,14 @@ import { eq, desc } from "drizzle-orm";
  */
 export interface IStorage {
   createContactMessage(message: InsertContactMessage): Promise<ContactMessage>;
-  getBlogPosts(): Promise<BlogPost[]>;
+  getContactMessages(): Promise<ContactMessage[]>;
+  getBlogPosts(publishedOnly?: boolean): Promise<BlogPost[]>;
   getBlogPostBySlug(slug: string): Promise<BlogPost | undefined>;
   createBlogPost(post: InsertBlogPost): Promise<BlogPost>;
+  updateBlogPost(id: number, post: Partial<InsertBlogPost>): Promise<BlogPost>;
+  deleteBlogPost(id: number): Promise<void>;
+  createImage(image: InsertImage): Promise<Image>;
+  getImages(): Promise<Image[]>;
 }
 
 /**
@@ -37,11 +45,24 @@ export class DatabaseStorage implements IStorage {
     return newMessage;
   }
 
-  async getBlogPosts(): Promise<BlogPost[]> {
+  async getContactMessages(): Promise<ContactMessage[]> {
     return await db
+      .select()
+      .from(contactMessages)
+      .orderBy(desc(contactMessages.createdAt));
+  }
+
+  async getBlogPosts(publishedOnly = false): Promise<BlogPost[]> {
+    const query = db
       .select()
       .from(blogPosts)
       .orderBy(desc(blogPosts.publishedAt));
+
+    if (publishedOnly) {
+      query.where(eq(blogPosts.isPublished, true));
+    }
+
+    return await query;
   }
 
   async getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> {
@@ -58,6 +79,38 @@ export class DatabaseStorage implements IStorage {
       .values(post)
       .returning();
     return newPost;
+  }
+
+  async updateBlogPost(id: number, post: Partial<InsertBlogPost>): Promise<BlogPost> {
+    const [updatedPost] = await db
+      .update(blogPosts)
+      .set({ ...post, publishedAt: undefined })
+      .where(eq(blogPosts.id, id))
+      .returning();
+
+    if (!updatedPost) throw new Error("Post not found");
+    return updatedPost;
+  }
+
+  async deleteBlogPost(id: number): Promise<void> {
+    await db
+      .delete(blogPosts)
+      .where(eq(blogPosts.id, id));
+  }
+
+  async createImage(image: InsertImage): Promise<Image> {
+    const [newImage] = await db
+      .insert(images)
+      .values(image)
+      .returning();
+    return newImage;
+  }
+
+  async getImages(): Promise<Image[]> {
+    return await db
+      .select()
+      .from(images)
+      .orderBy(desc(images.createdAt));
   }
 }
 

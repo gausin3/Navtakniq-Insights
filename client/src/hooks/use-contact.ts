@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@shared/routes";
 import { type InsertContactMessage } from "@shared/schema";
 
@@ -26,6 +26,23 @@ export function useSubmitContact() {
         throw new Error('Failed to submit message');
       }
       return api.contact.submit.responses[200].parse(await res.json());
+    },
+  });
+}
+
+/**
+ * Hook to fetch contact messages.
+ * @returns Query object for fetching messages.
+ */
+export function useContactMessages() {
+  return useQuery({
+    queryKey: ['/api/contact'],
+    queryFn: async () => {
+      const res = await fetch(api.contact.list.path);
+      if (!res.ok) {
+        throw new Error('Failed to fetch messages');
+      }
+      return api.contact.list.responses[200].parse(await res.json());
     },
   });
 }
