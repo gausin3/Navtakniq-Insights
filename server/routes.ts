@@ -2,7 +2,7 @@ import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage.js";
 import { api } from "../shared/routes.js";
-import { insertBlogPostSchema, changePasswordSchema } from "../shared/schema.js";
+import { insertBlogPostSchema, changePasswordSchema, updateUserRoleSchema } from "../shared/schema.js";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -154,6 +154,85 @@ export async function registerRoutes(
         res.status(400).json({ message: "Invalid input", errors: err.errors });
       } else {
         res.status(500).json({ message: "Failed to update password" });
+      }
+    }
+  });
+
+  // --- Admin User Management Routes ---
+
+  // Get all users
+  app.get("/api/users", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+    if (user.role !== "admin") return res.sendStatus(403);
+
+    const users = await storage.getUsers();
+    res.json(users);
+  });
+
+  // Create new user (Admin)
+  app.post("/api/users", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const currentUser = req.user as any;
+    if (currentUser.role !== "admin") return res.sendStatus(403);
+
+    try {
+      const existingUser = await storage.getUserByUsername(req.body.username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+
+      const hashedPassword = await hashPassword(req.body.password);
+      const newUser = await storage.createUser({
+        ...req.body,
+        password: hashedPassword,
+      });
+      res.status(201).json(newUser);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  // Update user role
+  app.patch("/api/users/:id/role", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const currentUser = req.user as any;
+    if (currentUser.role !== "admin") return res.sendStatus(403);
+
+    try {
+      const id = parseInt(req.params.id);
+      const { role } = updateUserRoleSchema.parse(req.body);
+
+      // Prevent changing own role to user (lockout protection)
+      if (currentUser.id === id && role === "user") {
+        return res.status(400).json({ message: "Cannot remove your own admin privileges" });
+      }
+
+      await storage.updateUserRole(id, role);
+      res.sendStatus(200);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to update role" });
+    }
+  });
+
+  // Admin Reset Password
+  app.patch("/api/users/:id/password", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const currentUser = req.user as any;
+    if (currentUser.role !== "admin") return res.sendStatus(403);
+
+    try {
+      const id = parseInt(req.params.id);
+      const { newPassword } = changePasswordSchema.pick({ newPassword: true }).parse(req.body);
+
+      const hashedPassword = await hashPassword(newPassword);
+      await storage.updateUserPassword(id, hashedPassword);
+      res.sendStatus(200);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid input", errors: err.errors });
+      } else {
+        res.status(500).json({ message: "Failed to reset password" });
       }
     }
   });

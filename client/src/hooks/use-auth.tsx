@@ -13,6 +13,11 @@ interface AuthContextType {
     logoutMutation: UseMutationResult<void, Error, void>;
     registerMutation: UseMutationResult<User, Error, InsertUser>;
     changePasswordMutation: UseMutationResult<void, Error, { currentPassword: string; newPassword: string }>;
+    // Admin management
+    users: User[];
+    createUserMutation: UseMutationResult<User, Error, InsertUser>;
+    updateUserRoleMutation: UseMutationResult<void, Error, { id: number; role: "admin" | "user" }>;
+    adminResetPasswordMutation: UseMutationResult<void, Error, { id: number; newPassword: string }>;
 }
 
 type LoginData = Pick<InsertUser, "username" | "password">;
@@ -134,6 +139,80 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
     });
 
+    // --- Admin User Management ---
+    const { data: users = [] } = useQuery<User[]>({
+        queryKey: ["/api/users"],
+        queryFn: async () => {
+            const res = await fetch("/api/users");
+            if (!res.ok) throw new Error("Failed to fetch users");
+            return res.json();
+        },
+        enabled: !!user && user.role === "admin",
+    });
+
+    const createUserMutation = useMutation({
+        mutationFn: async (newUser: InsertUser) => {
+            const res = await fetch("/api/users", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(newUser),
+            });
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.message || "Failed to create user");
+            }
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+            toast({ title: "Success", description: "User created successfully" });
+        },
+        onError: (error: Error) => {
+            toast({ title: "Error", description: error.message, variant: "destructive" });
+        },
+    });
+
+    const updateUserRoleMutation = useMutation({
+        mutationFn: async ({ id, role }: { id: number; role: "admin" | "user" }) => {
+            const res = await fetch(`/api/users/${id}/role`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ role }),
+            });
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.message || "Failed to update role");
+            }
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+            toast({ title: "Success", description: "User role updated successfully" });
+        },
+        onError: (error: Error) => {
+            toast({ title: "Error", description: error.message, variant: "destructive" });
+        },
+    });
+
+    const adminResetPasswordMutation = useMutation({
+        mutationFn: async ({ id, newPassword }: { id: number; newPassword: string }) => {
+            const res = await fetch(`/api/users/${id}/password`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ newPassword }),
+            });
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.message || "Failed to reset password");
+            }
+        },
+        onSuccess: () => {
+            toast({ title: "Success", description: "Password reset successfully" });
+        },
+        onError: (error: Error) => {
+            toast({ title: "Error", description: error.message, variant: "destructive" });
+        },
+    });
+
     return (
         <AuthContext.Provider
             value={{
@@ -144,6 +223,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 logoutMutation,
                 registerMutation,
                 changePasswordMutation,
+                users,
+                createUserMutation,
+                updateUserRoleMutation,
+                adminResetPasswordMutation,
             }}
         >
             {children}

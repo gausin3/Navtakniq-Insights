@@ -98,3 +98,7 @@ export const changePasswordSchema = z.object({
   currentPassword: z.string(),
   newPassword: z.string().min(6, "Password must be at least 6 characters"),
 });
+
+export const updateUserRoleSchema = z.object({
+  role: z.enum(["admin", "user"]),
+});

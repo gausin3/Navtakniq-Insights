@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertBlogPostSchema, type InsertBlogPost, type BlogPost, changePasswordSchema } from "@shared/schema";
+import { insertBlogPostSchema, type InsertBlogPost, type BlogPost, changePasswordSchema, insertUserSchema, type InsertUser, type User } from "@shared/schema";
 import { usePosts, useCreatePost, useUpdatePost, useDeletePost } from "@/hooks/use-posts";
 import { useContactMessages } from "@/hooks/use-contact";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Plus, Edit, Trash2, ArrowLeft, Save, Image as ImageIcon, LayoutGrid, EyeOff, MessageSquare, Settings } from "lucide-react";
+import { Loader2, Plus, Edit, Trash2, ArrowLeft, Save, Image as ImageIcon, LayoutGrid, EyeOff, MessageSquare, Settings, Users, Shield, ShieldAlert } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
     AlertDialog,
@@ -26,7 +26,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { LogOut } from "lucide-react";
 
 export default function Admin() {
-    const { user, logoutMutation, changePasswordMutation } = useAuth();
+    const { user, logoutMutation, changePasswordMutation, users, createUserMutation, updateUserRoleMutation, adminResetPasswordMutation } = useAuth();
     const { data: posts, isLoading } = usePosts();
     const { data: contactMessages, isLoading: isLoadingMessages } = useContactMessages();
     const { mutate: createPost, isPending: isCreating } = useCreatePost();
@@ -34,13 +34,27 @@ export default function Admin() {
     const { mutate: deletePost, isPending: isDeleting } = useDeletePost();
     const { toast } = useToast();
 
-    const [mode, setMode] = useState<"list" | "create" | "edit" | "gallery" | "messages" | "settings">("list");
+    const [mode, setMode] = useState<"list" | "create" | "edit" | "gallery" | "messages" | "settings" | "users">("list");
     const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
     const [deleteId, setDeleteId] = useState<number | null>(null);
+
+    // User Management State
+    const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
+    const [resetPasswordId, setResetPasswordId] = useState<number | null>(null);
+    const [newResetPassword, setNewResetPassword] = useState("");
 
     // Image Picker State
     const [isImagePickerOpen, setIsImagePickerOpen] = useState(false);
     const [pickerTarget, setPickerTarget] = useState<"cover" | "content">("cover");
+
+    const createUserForm = useForm<InsertUser>({
+        resolver: zodResolver(insertUserSchema),
+        defaultValues: {
+            username: "",
+            password: "",
+            role: "user",
+        },
+    });
 
     const form = useForm<InsertBlogPost>({
         resolver: zodResolver(insertBlogPostSchema),
@@ -61,6 +75,30 @@ export default function Admin() {
             newPassword: "",
         },
     });
+
+    const onCreateUserSubmit = (data: InsertUser) => {
+        createUserMutation.mutate(data, {
+            onSuccess: () => {
+                setIsCreateUserOpen(false);
+                createUserForm.reset();
+            }
+        });
+    };
+
+    const handleRoleUpdate = (id: number, currentRole: "admin" | "user") => {
+        const newRole = currentRole === "admin" ? "user" : "admin";
+        updateUserRoleMutation.mutate({ id, role: newRole });
+    };
+
+    const handleResetPassword = (id: number) => {
+        if (!newResetPassword) return;
+        adminResetPasswordMutation.mutate({ id, newPassword: newResetPassword }, {
+            onSuccess: () => {
+                setResetPasswordId(null);
+                setNewResetPassword("");
+            }
+        });
+    };
 
     const handleEdit = (post: BlogPost) => {
         setEditingPost(post);
@@ -170,6 +208,7 @@ export default function Admin() {
                         {mode === "list" && "Dashboard"}
                         {mode === "gallery" && "Media Library"}
                         {mode === "messages" && "Contact Messages"}
+                        {mode === "users" && "User Management"}
                         {mode === "settings" && "Account Settings"}
                         {mode === "create" && "New Post"}
                         {mode === "edit" && "Edit Post"}
@@ -193,6 +232,12 @@ export default function Admin() {
                                 </button>
                                 {isAdmin && (
                                     <>
+                                        <button
+                                            onClick={() => setMode("users")}
+                                            className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition-colors flex items-center gap-2"
+                                        >
+                                            <Users size={18} /> Users
+                                        </button>
                                         <button
                                             onClick={() => setMode("messages")}
                                             className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition-colors flex items-center gap-2"
@@ -328,6 +373,71 @@ export default function Admin() {
                                                     </tr>
                                                 ))
                                             )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </motion.div>
+                    ) : mode === "users" ? (
+                        <motion.div
+                            key="users"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                        >
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-xl font-bold text-white">User Management</h2>
+                                <button
+                                    onClick={() => setIsCreateUserOpen(true)}
+                                    className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-bold hover:bg-cyan-400 transition-colors flex items-center gap-2"
+                                >
+                                    <Plus size={18} /> Add User
+                                </button>
+                            </div>
+
+                            <div className="bg-secondary/20 border border-white/5 rounded-xl overflow-hidden">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-sm text-white">
+                                        <thead className="bg-white/5 uppercase font-medium text-xs">
+                                            <tr>
+                                                <th className="px-6 py-4">ID</th>
+                                                <th className="px-6 py-4">Username</th>
+                                                <th className="px-6 py-4">Role</th>
+                                                <th className="px-6 py-4">Created At</th>
+                                                <th className="px-6 py-4 text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-white/5">
+                                            {users.map((u) => (
+                                                <tr key={u.id} className="hover:bg-white/5 transition-colors">
+                                                    <td className="px-6 py-4 text-muted-foreground">#{u.id}</td>
+                                                    <td className="px-6 py-4 font-medium">{u.username}</td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`px-2 py-1 rounded text-xs ${u.role === 'admin' ? 'bg-primary/20 text-primary' : 'bg-white/10 text-white'}`}>
+                                                            {u.role}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-muted-foreground">{new Date(u.createdAt as any).toLocaleDateString()}</td>
+                                                    <td className="px-6 py-4 text-right flex justify-end gap-2">
+                                                        <button
+                                                            onClick={() => setResetPasswordId(u.id)}
+                                                            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white hover:text-yellow-400 transition-colors"
+                                                            title="Reset Password"
+                                                        >
+                                                            <ShieldAlert size={16} />
+                                                        </button>
+                                                        {u.id !== user?.id && (
+                                                            <button
+                                                                onClick={() => handleRoleUpdate(u.id, u.role as "admin" | "user")}
+                                                                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white hover:text-cyan-400 transition-colors"
+                                                                title={u.role === 'admin' ? "Demote to User" : "Promote to Admin"}
+                                                            >
+                                                                <Shield size={16} />
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
                                         </tbody>
                                     </table>
                                 </div>
@@ -533,6 +643,79 @@ export default function Admin() {
                         </DialogHeader>
                         <div className="flex-grow overflow-y-auto p-1">
                             <ImageGallery onSelect={handleImageSelect} />
+                        </div>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Create User Dialog */}
+                <Dialog open={isCreateUserOpen} onOpenChange={setIsCreateUserOpen}>
+                    <DialogContent className="bg-[#0f172a] border-white/10 text-white">
+                        <DialogHeader>
+                            <DialogTitle>Add New User</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={createUserForm.handleSubmit(onCreateUserSubmit)} className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-white">Username</label>
+                                <input
+                                    {...createUserForm.register("username")}
+                                    className="w-full px-4 py-2 rounded-lg bg-black/20 border border-white/10 text-white focus:border-primary/50 focus:outline-none transition-colors"
+                                />
+                                {createUserForm.formState.errors.username && <p className="text-red-400 text-xs">{createUserForm.formState.errors.username.message}</p>}
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-white">Password</label>
+                                <input
+                                    type="password"
+                                    {...createUserForm.register("password")}
+                                    className="w-full px-4 py-2 rounded-lg bg-black/20 border border-white/10 text-white focus:border-primary/50 focus:outline-none transition-colors"
+                                />
+                                {createUserForm.formState.errors.password && <p className="text-red-400 text-xs">{createUserForm.formState.errors.password.message}</p>}
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-white">Role</label>
+                                <select
+                                    {...createUserForm.register("role")}
+                                    className="w-full px-4 py-2 rounded-lg bg-black/20 border border-white/10 text-white focus:border-primary/50 focus:outline-none transition-colors"
+                                >
+                                    <option value="user">User</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={createUserMutation.isPending}
+                                className="w-full py-2 rounded-lg bg-primary text-primary-foreground font-bold hover:bg-cyan-400 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {createUserMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : "Create User"}
+                            </button>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Reset Password Dialog */}
+                <Dialog open={!!resetPasswordId} onOpenChange={(open) => !open && setResetPasswordId(null)}>
+                    <DialogContent className="bg-[#0f172a] border-white/10 text-white">
+                        <DialogHeader>
+                            <DialogTitle>Reset User Password</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-white">New Password</label>
+                                <input
+                                    type="password"
+                                    value={newResetPassword}
+                                    onChange={(e) => setNewResetPassword(e.target.value)}
+                                    className="w-full px-4 py-2 rounded-lg bg-black/20 border border-white/10 text-white focus:border-primary/50 focus:outline-none transition-colors"
+                                    placeholder="Enter new password"
+                                />
+                            </div>
+                            <button
+                                onClick={() => resetPasswordId && handleResetPassword(resetPasswordId)}
+                                disabled={adminResetPasswordMutation.isPending || !newResetPassword}
+                                className="w-full py-2 rounded-lg bg-yellow-500 text-black font-bold hover:bg-yellow-400 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {adminResetPasswordMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : "Reset Password"}
+                            </button>
                         </div>
                     </DialogContent>
                 </Dialog>

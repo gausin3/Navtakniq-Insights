@@ -41,8 +41,10 @@ export interface IStorage {
   getImages(): Promise<Image[]>;
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUserPassword(id: number, password: string): Promise<void>;
+  updateUserRole(id: number, role: "admin" | "user"): Promise<void>;
   sessionStore: session.Store;
 }
 
@@ -152,6 +154,14 @@ export class DatabaseStorage implements IStorage {
 
   async updateUserPassword(id: number, password: string): Promise<void> {
     await db.update(users).set({ password }).where(eq(users.id, id));
+  }
+
+  async getUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async updateUserRole(id: number, role: "admin" | "user"): Promise<void> {
+    await db.update(users).set({ role }).where(eq(users.id, id));
   }
 }
 
